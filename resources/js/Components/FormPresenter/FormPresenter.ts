@@ -63,6 +63,11 @@ type InputField =
       }
     | InputFieldInline;
 
+type CheckboxRadioSelectOptions = {
+    text: string;
+    value: string | number;
+};
+
 type FieldSetting = {
     name: string;
     type: TypeField;
@@ -70,6 +75,7 @@ type FieldSetting = {
     label?: string;
     nativeAttributes?: Object;
     visible: boolean;
+    options?: CheckboxRadioSelectOptions[];
 };
 
 export class Field {
@@ -106,6 +112,30 @@ export class Field {
                 .split(":")[1];
         }
 
+        const options = [];
+
+        if (
+            ["checkbox_group", "radio_group"].includes(type) &&
+            params.toString().includes("options:")
+        ) {
+            params
+                .filter((item) => item.includes("options:"))
+                .forEach((item) => {
+                    const valueOptions = item.split(':')[1].split(",");
+
+                    if (item.includes("=")) {
+                        valueOptions.forEach((option) => {
+                            const [value, text] = option.split("=");
+                            options.push({ text, value });
+                        });
+                    } else {
+                        valueOptions.forEach((option) => {
+                            options.push({ text: option, value: option });
+                        });
+                    }
+                });
+        }
+
         return {
             name,
             type: type as TypeField,
@@ -114,6 +144,7 @@ export class Field {
                 : (null as TypeHtmlField),
             visible: !params.includes("hidden"),
             label,
+            options: options as CheckboxRadioSelectOptions[],
         };
     }
 
@@ -149,6 +180,17 @@ export class Field {
         return targetTypes.some((type) =>
             type.includes(this.fieldSettings.type)
         );
+    }
+
+    get isRadioGroup(): boolean {
+        return this.fieldSettings.type == 'radio_group';
+    }
+    get isCheckboxGroup(): boolean {
+        return this.fieldSettings.type == 'checkbox_group';
+    }
+
+    get options(): CheckboxRadioSelectOptions[] {
+        return this.fieldSettings.options;
     }
 }
 
