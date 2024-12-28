@@ -1,114 +1,57 @@
-<script setup>
+<script setup lang="ts">
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { useForm } from "@inertiajs/vue3";
 import { ref, reactive, watch, watchEffect } from "vue";
+import FormPresenter from "@/Components/FormPresenter/FormPresenter.vue";
+import { FormPresenter as FormPresenterBuilder } from "@/Components/FormPresenter/FormPresenter";
 
-const formCreateOrder = reactive({
-    amount: "0",
-    type: "output",
-    bank_id: "6",
-    card_number: "",
-    card_number_client: "",
-    sbp: "",
-    sbp_phone: "",
+const orderForm = useForm({
+    amount: 1000,
+    type: 'input',
+    bank_id: 1,
+    card_number: '1234567890123456',
+    card_number_client: null,
+    sbp: 0,
+    sbp_phone: null,
 });
 
-const modelValue = reactive({
-    amount: "0",
-    type: "output",
-    bank_id: "6",
-    card_number: "",
-    card_number_client: "",
-    sbp: "",
-    sbp_phone: "",
-})
-
-const controllerFormCreateOrder = useForm(formCreateOrder);
-
-const createOrderInputFields = ref([
-    {
-        name: "type",
-        label: "Тип",
-        type: "radio",
-        props: {
-            class: "!flex-row",
-            options: [
-                { value: "input", text: "Ввод" },
-                { value: "output", text: "Вывод" },
-            ],
+const form = FormPresenterBuilder.init()
+    .fields([
+        "amount|number|label:Сумма",
+        "type|radio_group|label:Тип|options:input=Ввод,output=Вывод",
+        "bank_id|radio_group|label:Банк",
+        "card_number|text|label:Номер карты|hidden",
+        "card_number_client|text|label:Номер карты клиента",
+        "sbp|radio_group|label:СБП|options:1=Да,0=Нет",
+        "sbp_phone|text|label:СБП номер|hidden",
+    ])
+    .fieldModel(orderForm)
+    .defaultState((remoteControl) => {
+        remoteControl.field('type', 'input');
+    }).watchFields({
+        type: (newValue, oldValue, remoteControl) => {
+            if (newValue == 'output') {
+                remoteControl.field('card_number_client').hide();
+            } else {
+                remoteControl.field('card_number_client').show();
+            }
         },
-    },
-    {
-        name: "amount",
-        label: "Сумма",
-        type: "input",
-        props: { placeholder: "1000", type: "number" },
-    },
-    {
-        name: "card_number_client",
-        label: "Номер карты клиента",
-        type: "input",
-        props: {class: [], placeholder: "4276600023344332", type: "text" },
-    },
-    {
-        name: "bank_id",
-        label: "Bank",
-        type: "checkboxes",
-        props: {
-            class: "!flex-row",
-            options: [
-                { value: 7, text: "Sberbank" },
-                { value: 6, text: "Sberbank" },
-            ],
+        sbp: (newValue, oldValue, remoteControl) => {
+            if (newValue == 1) {
+                remoteControl.field('sbp_phone').show();
+                if (remoteControl.isVal('type', 'input')) {
+                    remoteControl.field('card_number_client').hide();
+                }
+            } else {
+                remoteControl.field('sbp_phone').hide();
+                if (remoteControl.isVal('type', 'input')) {
+                    remoteControl.field('card_number_client').show();
+                }
+            }
         },
-    },
-    {
-        name: "sbp",
-        label: "СБП",
-        type: "radio",
-        props: {
-            class: ["!flex-row"],
-            options: [
-                { value: 0, text: "Нет" },
-                { value: 1, text: "Да" },
-            ],
-        },
-    },
-    { component: "vfb-buttons", props: { submitText: "Go" } },
-]);
-
-watchEffect(formCreateOrder, (newValue) => {
-    console.log('yes');
-    if (newValue.type == "input") {
-        console.log('no')
-        createOrderInputFields
-            .find((item) => item.name == "card_number_client")
-            .props.class.filter((item) => item != "hidden"); // eslint-disable-line
-    } else {
-        console.log('yes')
-        createOrderInputFields
-            .find((item) => item.name == "card_number_client")
-            .props.class.push("hidden"); // eslint-disable-line' // eslint-disable-line
-    }
-}, {deep: true});
-
-const formFields = createOrderInputFields;
-
-// const fields = {
-//     name: 'name:name|text',
-//     fname: 'name:fname|text|label:First name',
-//     lname: 'name:lname|text|label:Last name',
-//     username: 'name:username|text',
-//     email: 'name:email|email',
-//     email_confirmation: 'name:email_confirmation|email',
-//     password: 'name:password|password',
-//     password_confirmation: 'name:password_confirmation|password',
-//     age: 'name:age|number',
-//     birthday: 'name:birthday|date',
-//     photo: 'name:photo|file|accept=image/*',
-//     picture: 'name:picture|file|accept=image/*',
-//     profile_picture: 'name:profile_picture|file|accept=image/*'
-// };
+    });
+    
+    const presenter = form.make();
 </script>
 
 <template>
@@ -128,10 +71,7 @@ const formFields = createOrderInputFields;
                 </div>
 
                 <div class="p-12">
-                    <vue-form-builder
-                        :fields="formFields"
-                        v-model="modelValue"
-                    />
+                    <FormPresenter :presenter />
                 </div>
             </div>
         </div>

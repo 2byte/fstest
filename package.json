@@ -21,6 +21,7 @@
     },
     "dependencies": {
         "@uwlajs/vue-form-builder": "^1.1.1",
+        "vitest": "^2.1.8",
         "vue-good-table": "^2.21.11"
     }
 }
