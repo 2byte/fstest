@@ -25,6 +25,12 @@ const form = FormPresenterBuilder.init()
         "sbp|radio_group|label:СБП|options:1=Да,0=Нет",
         "sbp_phone|text|label:СБП номер|hidden",
     ])
+    .options({
+        bank_id: [
+            { value: 1, text: 'Банк 1' },
+            { value: 2, text: 'Банк 2' },
+        ]
+    })
     .fieldModel(orderForm)
     .defaultState((remoteControl) => {
         remoteControl.field('type', 'input');
@@ -35,6 +41,7 @@ const form = FormPresenterBuilder.init()
             } else {
                 remoteControl.field('card_number_client').show();
             }
+            // remoteControl.field('card_number_client').hideIf('type', 'output');
         },
         sbp: (newValue, oldValue, remoteControl) => {
             if (newValue == 1) {

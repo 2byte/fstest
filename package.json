@@ -1,6 +1,9 @@
 {
     "private": true,
     "type": "module",
+    "compilerOptions": {
+        "target": "esnext"
+    },
     "scripts": {
         "build": "vite build",
         "dev": "vite"

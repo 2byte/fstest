@@ -3,7 +3,8 @@
         "baseUrl": ".",
         "paths": {
             "@/*": ["resources/js/*"]
-        }
+        },
+        "target": "ESNext"
     },
     "exclude": ["node_modules", "public"]
 }

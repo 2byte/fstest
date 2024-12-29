@@ -81,7 +81,8 @@ type FieldSetting = {
 export class Field {
     name: string;
     typeHtmlField: TypeHtmlField;
-    fieldSettings: FieldSetting;
+    fieldSettings: FieldSetting = reactive({});
+
     static typeCustomFields: string[] = [
         "checkbox_group",
         "radio_group",
@@ -91,7 +92,7 @@ export class Field {
 
     constructor(field: InputField) {
         if (typeof field == "string")
-            this.fieldSettings = Field.parseField(field);
+           Object.assign(this.fieldSettings, Field.parseField(field));
         // else this.fieldSettings = field;
 
         this.name = this.fieldSettings.name;
@@ -148,7 +149,12 @@ export class Field {
         };
     }
 
-    isVisible(): boolean {
+    setOptions(options: CheckboxRadioSelectOptions[]) {
+        this.fieldSettings.options = options;
+        return this;
+    }
+
+    get isVisible(): boolean {
         return this.fieldSettings.visible;
     }
 
@@ -211,9 +217,21 @@ class FieldRemoteControl {
 
     hide() {
         this.#field.fieldSettings.visible = false;
+        return this;
     }
     show() {
         this.#field.fieldSettings.visible = true;
+        return this;
+    }
+
+    mount() {
+        this.show();
+        return this;
+    }
+
+    unmount() {
+        this.hide();
+        return this;
     }
 }
 
@@ -249,12 +267,18 @@ type WatchFieldsTrigger = {
     ) => void;
 };
 
+type FieldOptions = {
+    [key: string]: CheckboxRadioSelectOptions[];
+}
+
 export class FormPresenter {
     inputFields: InputField[] = [];
 
     _fieldsMap: Map<string, Field> = new Map<string, Field>();
 
     _fieldsModel: Object = reactive({});
+
+    _fieldsOptions: Map<string, CheckboxRadioSelectOptions[]> = new Map<string, CheckboxRadioSelectOptions[]>();
 
     _remoteControl: RemoteControl = new RemoteControl(this);
 
@@ -289,6 +313,8 @@ export class FormPresenter {
                 typeof field === "string" ? field.split("|")[0] : field.name;
             this._fieldsMap.set(fieldName, Field.make(field));
         });
+
+        this.addOptionToField();
     }
 
     fieldModel(modelObj: Object): this {
@@ -302,22 +328,43 @@ export class FormPresenter {
         return this;
     }
 
+    options(fieldOptions: FieldOptions): this {
+        for (const [name, options] of Object.entries(fieldOptions)) {
+            this._fieldsOptions.set(name, options);
+        }
+
+        return this;
+    }
+
+    addOptionToField() {
+        for (const [name, options] of this._fieldsOptions) {
+            if (!this._fieldsMap.has(name)) {
+                throw new Error(`Error set options for field ${name}, not found`)
+            }
+            this._fieldsMap.get(name).setOptions(options);
+        }
+    }
+
     make(): this {
         this.fieldBuild();
         this.#defaultStateCb(this._remoteControl);
+
+        const previousState: Object = {...this._fieldsModel};
 
         watch(this._fieldsModel, (newVal: any, oldVal: any) => {
             const keys = Object.keys(newVal);
 
             keys.forEach((key) => {
-                if (newVal[key] !== oldVal[key]) {
+                if (newVal[key] !== previousState[key]) {
+
                     const trigger = this.#watchFieldTriggers.get(key);
 
                     if (trigger) {
-                        trigger(newVal[key], oldVal[key], this._remoteControl);
+                        trigger(newVal[key], previousState[key], this._remoteControl);
                     }
                 }
             });
+            Object.assign(previousState, newVal);
         });
 
         return this;
@@ -325,5 +372,9 @@ export class FormPresenter {
 
     get entryFields(): Map<string, Field> {
         return this._fieldsMap;
+    }
+
+    get model(): Object {
+        return this._fieldsModel;
     }
 }
