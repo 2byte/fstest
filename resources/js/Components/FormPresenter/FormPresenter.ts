@@ -276,7 +276,7 @@ type FieldOptions = {
     [key: string]: CheckboxRadioSelectOptions[];
 }
 
-type CallbackSubmit = (this: FormPresenter, remoteControl: RemoteControl) => FormPresenter;
+type CallbackSubmit = (self: FormPresenter, remoteControl: RemoteControl) => void;
 
 export class FormPresenter {
     inputFields: InputField[] = [];
