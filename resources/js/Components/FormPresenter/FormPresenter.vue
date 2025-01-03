@@ -12,13 +12,13 @@ const emit = defineEmits([]);
 </script>
 
 <template>
-    <form>
+    <form @submit="props.presenter.fireSubmit($event)">
         <template
             v-for="[name, field] of props.presenter.entryFields"
             :key="field.name"
         >
             <label class="block mb-4" v-if="field.isVisible">
-                <span class="text-gray-700">{{ field.label }}</span>
+                <span class="text-gray-700" v-if="!field.isBtnSubmit">{{ field.label }}</span>
                 <template v-if="field.isFormInput">
                     <input
                         :type="field.type"
@@ -45,6 +45,9 @@ const emit = defineEmits([]);
                             <span class="text-gray-700">{{ text }}</span>
                         </label>
                     </div>
+                </template>
+                <template v-if="field.isBtnSubmit">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded">{{ field.label }}</button>
                 </template>
             </label>
         </template>

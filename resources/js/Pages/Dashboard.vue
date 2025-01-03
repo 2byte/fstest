@@ -24,6 +24,7 @@ const form = FormPresenterBuilder.init()
         "card_number_client|text|label:Номер карты клиента",
         "sbp|radio_group|label:СБП|options:1=Да,0=Нет",
         "sbp_phone|text|label:СБП номер|hidden",
+        "btnsubmit|submit|label:Оплатить",
     ])
     .options({
         bank_id: [
@@ -56,6 +57,8 @@ const form = FormPresenterBuilder.init()
                 }
             }
         },
+    }).submit((self, remoteControl) => {
+        
     });
     
     const presenter = form.make();

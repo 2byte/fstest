@@ -15,7 +15,8 @@ type TypeField =
     | "textarea"
     | "range"
     | "date"
-    | "datetime-local";
+    | "datetime-local"
+    | "submit";
 type TypeHtmlField =
     | "text"
     | "number"
@@ -27,6 +28,7 @@ type TypeHtmlField =
     | "range"
     | "date"
     | "datetime-local"
+    | "button"
     | `${null}`;
 type AdditionalParamsField = `label:${string | number}` | "hidden";
 
@@ -86,7 +88,7 @@ export class Field {
     static typeCustomFields: string[] = [
         "checkbox_group",
         "radio_group",
-        "swich",
+        "switch",
         "switch_group",
     ];
 
@@ -194,6 +196,9 @@ export class Field {
     get isCheckboxGroup(): boolean {
         return this.fieldSettings.type == 'checkbox_group';
     }
+    get isBtnSubmit() {
+        return this.fieldSettings.type == 'submit';
+    }
 
     get options(): CheckboxRadioSelectOptions[] {
         return this.fieldSettings.options;
@@ -271,6 +276,8 @@ type FieldOptions = {
     [key: string]: CheckboxRadioSelectOptions[];
 }
 
+type CallbackSubmit = (this: FormPresenter, remoteControl: RemoteControl) => FormPresenter;
+
 export class FormPresenter {
     inputFields: InputField[] = [];
 
@@ -288,6 +295,8 @@ export class FormPresenter {
     >();
 
     #defaultStateCb: CallableFunction;
+
+    #cbSubmit: CallbackSubmit;
 
     constructor() {}
 
@@ -328,6 +337,12 @@ export class FormPresenter {
         return this;
     }
 
+    submit(cbSubmit: CallbackSubmit): this {
+        this.#cbSubmit = cbSubmit;
+
+        return this;
+    }
+
     options(fieldOptions: FieldOptions): this {
         for (const [name, options] of Object.entries(fieldOptions)) {
             this._fieldsOptions.set(name, options);
@@ -343,6 +358,13 @@ export class FormPresenter {
             }
             this._fieldsMap.get(name).setOptions(options);
         }
+    }
+
+    fireSubmit(e) {
+        if (this.#cbSubmit) {
+            // this.#cbSubmit(this, this._remoteControl);
+        }
+        return this;
     }
 
     make(): this {
