@@ -224,10 +224,15 @@ class FieldRemoteControl {
         this.#field.fieldSettings.visible = false;
         return this;
     }
+
+    hideIf() {}
+
     show() {
         this.#field.fieldSettings.visible = true;
         return this;
     }
+
+    showIf() {}
 
     mount() {
         this.show();
@@ -382,10 +387,27 @@ export class FormPresenter {
         return this;
     }
 
-    make(): this {
-        this.fieldBuild();
-        this.#defaultStateCb(this._remoteControl);
+    watchObjectChanges(stateObject: Object, cb): void {
+        const previousState: Object = {...stateObject};
 
+        watch(stateObject, (newVal: any, oldVal: any) => {
+            const keys = Object.keys(newVal);
+
+            keys.forEach((key) => {
+                if (newVal[key] !== previousState[key]) {
+
+                    const trigger = this.#watchFieldTriggers.get(key);
+
+                    if (trigger) {
+                        trigger(newVal[key], previousState[key], this._remoteControl);
+                    }
+                }
+            });
+            Object.assign(previousState, newVal);
+        });
+    }
+
+    watcherModelChanges() {
         const previousState: Object = {...this._fieldsModel};
 
         watch(this._fieldsModel, (newVal: any, oldVal: any) => {
@@ -403,6 +425,12 @@ export class FormPresenter {
             });
             Object.assign(previousState, newVal);
         });
+    }
+
+    make(): this {
+        this.fieldBuild();
+        this.#defaultStateCb(this._remoteControl);
+        this.watcherModelChanges();
 
         return this;
     }
