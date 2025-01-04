@@ -1,18 +1,23 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { FormPresenter } from "./FormPresenter";
+import ImgLoader from "./ImgLoader.vue";
 
-const props = defineProps({
+type PropsParams = {
+    presenter: FormPresenter;
+};
+
+const props: PropsParams = defineProps({
     presenter: {
         type: FormPresenter,
         required: true,
     },
 });
 
-const emit = defineEmits([]);
+// const emit = defineEmits([]);
 </script>
 
 <template>
-    <form @submit="props.presenter.fireSubmit($event)">
+    <form @submit="props.presenter.fireSubmit($event)" v-if="props.presenter.isShowForm.value">
         <template
             v-for="[name, field] of props.presenter.entryFields"
             :key="field.name"
@@ -47,7 +52,10 @@ const emit = defineEmits([]);
                     </div>
                 </template>
                 <template v-if="field.isBtnSubmit">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded">{{ field.label }}</button>
+                    <button type="submit" class="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded">
+                        {{ field.label }}
+                        <ImgLoader v-if="props.presenter.isShowImgLoader.value" />
+                    </button>
                 </template>
             </label>
         </template>

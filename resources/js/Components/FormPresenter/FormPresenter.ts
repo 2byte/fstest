@@ -1,4 +1,4 @@
-import { reactive, watch } from "vue";
+import { reactive, ref, watch } from "vue";
 
 // Any your name name=""
 type NameField = `${string}`;
@@ -262,6 +262,16 @@ class RemoteControl {
     isVal(fieldName: string, val: any) {
         return this.#fp._fieldsModel[fieldName] == val;
     }
+
+    offImgLoader(): this {
+        this.#fp.isShowImgLoader.value = false;
+        return this;
+    }
+
+    hideForm() {
+        this.#fp.isShowForm.value = false;
+        return false;
+    }
 }
 
 type WatchFieldsTrigger = {
@@ -276,7 +286,7 @@ type FieldOptions = {
     [key: string]: CheckboxRadioSelectOptions[];
 }
 
-type CallbackSubmit = (self: FormPresenter, remoteControl: RemoteControl) => void;
+type CallbackSubmit = (event: SubmitEvent, remoteControl: RemoteControl) => void;
 
 export class FormPresenter {
     inputFields: InputField[] = [];
@@ -297,6 +307,9 @@ export class FormPresenter {
     #defaultStateCb: CallableFunction;
 
     #cbSubmit: CallbackSubmit;
+
+    isShowImgLoader: ref = ref(false);
+    isShowForm: ref = ref(true);
 
     constructor() {}
 
@@ -360,9 +373,11 @@ export class FormPresenter {
         }
     }
 
-    fireSubmit(e) {
+    fireSubmit(e: SubmitEvent): this {
+        this.isShowImgLoader.value = true;
+
         if (this.#cbSubmit) {
-            // this.#cbSubmit(this, this._remoteControl);
+            this.#cbSubmit(e, this._remoteControl);
         }
         return this;
     }

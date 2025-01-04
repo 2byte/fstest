@@ -57,8 +57,14 @@ const form = FormPresenterBuilder.init()
                 }
             }
         },
-    }).submit((self, remoteControl) => {
+    }).submit((event, remoteControl) => {
         // remoteControl.field
+        event.preventDefault();
+        console.log(event);
+        setTimeout(() => {
+            remoteControl.offImgLoader();
+            remoteControl.hideForm()
+        }, 5000)
     });
     
     const presenter = form.make();
