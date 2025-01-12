@@ -407,6 +407,13 @@ export class FormPresenter {
         });
     }
 
+    watchFieldChanges() {
+        const currentStateFields = this._fieldsMap.entries().map(([k, v]) => {
+            return v.fieldSettings;
+        });
+        
+    }
+
     watcherModelChanges() {
         const previousState: Object = {...this._fieldsModel};
 
