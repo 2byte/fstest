@@ -80,6 +80,11 @@ type FieldSetting = {
     options?: CheckboxRadioSelectOptions[];
 };
 
+type TriggerHideField = {
+    fieldName: string;
+    relateToFieldName: string;
+};
+
 export class Field {
     name: string;
     typeHtmlField: TypeHtmlField;
@@ -298,6 +303,8 @@ export class FormPresenter {
 
     _fieldsMap: Map<string, Field> = new Map<string, Field>();
 
+    _fieldVisibleTriggers: Map<string, TriggerHideField> = new Map();
+
     _fieldsModel: Object = reactive({});
 
     _fieldsOptions: Map<string, CheckboxRadioSelectOptions[]> = new Map<string, CheckboxRadioSelectOptions[]>();
@@ -378,6 +385,15 @@ export class FormPresenter {
         }
     }
 
+    addTriggerHideField(fieldName: string, relateToFieldName: string) {
+        this._fieldVisibleTriggers.set(fieldName, {
+            fieldName,
+            relateToFieldName,
+        })
+
+        return this;
+    }
+
     fireSubmit(e: SubmitEvent): this {
         this.isShowImgLoader.value = true;
 
@@ -412,6 +428,7 @@ export class FormPresenter {
             return v.fieldSettings;
         });
         
+
     }
 
     watcherModelChanges() {
