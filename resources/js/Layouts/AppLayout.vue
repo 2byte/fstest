@@ -282,6 +282,8 @@ const logout = () => {
 
             <!-- Page Content -->
             <main>
+                <div v-if="$page.props.flash.success_message" class="bg-green-100 p-4 text-green-500"></div>
+                <div v-if="$page.props.flash.error_message" class="bg-red-100 p-4 text-red-500"></div>
                 <slot />
             </main>
         </div>

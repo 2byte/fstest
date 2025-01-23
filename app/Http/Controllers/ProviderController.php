@@ -29,6 +29,10 @@ class ProviderController extends Controller
     public function store(Request $request)
     {
         //
+        // $request->validate([]);
+        $provider = Provider::create($request->all());
+        
+        return redirect()->route('dashboard')->with('success', 'Провайдер успешно создан');
     }
 
     /**

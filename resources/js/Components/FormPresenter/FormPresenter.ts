@@ -230,7 +230,7 @@ class FieldRemoteControl {
         return this;
     }
 
-    hideIf() {}
+    hideIf(fieldName: string, relateFieldName: string) {}
 
     show() {
         this.#field.fieldSettings.visible = true;
@@ -423,12 +423,16 @@ export class FormPresenter {
         });
     }
 
-    watchFieldChanges() {
+    watcherFieldChanges() {
         const currentStateFields = this._fieldsMap.entries().map(([k, v]) => {
             return v.fieldSettings;
         });
         
+        currentStateFields.forEach((fieldSetting: FieldSetting) => {
+            watch(() => fieldSetting.visible, (newValue, oldValue) => {
 
+            });
+        });
     }
 
     watcherModelChanges() {
@@ -453,8 +457,11 @@ export class FormPresenter {
 
     make(): this {
         this.fieldBuild();
-        this.#defaultStateCb(this._remoteControl);
+        if (this.#defaultStateCb) {
+            this.#defaultStateCb(this._remoteControl);
+        }
         this.watcherModelChanges();
+        this.watcherFieldChanges();
 
         return this;
     }

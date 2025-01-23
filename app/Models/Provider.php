@@ -9,4 +9,6 @@ class Provider extends Model
 {
     /** @use HasFactory<\Database\Factories\ProviderFactory> */
     use HasFactory;
+
+    protected $guarded = ['id'];
 }
