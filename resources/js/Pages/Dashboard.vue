@@ -27,9 +27,9 @@ const form = FormPresenterBuilder.init()
         poviderCreateForm.post(route("provider.store"));
     });
 
-const presenter = form.make();
+const presenter: FormPresenterBuilder = form.make();
 
-const isShowCreateProviderForm = ref(false);
+const isShowCreateProviderForm: Boolean = ref(false);
 </script>
 
 <template>
@@ -52,9 +52,10 @@ const isShowCreateProviderForm = ref(false);
                     <PrimaryButton v-if="!isShowCreateProviderForm" @click="isShowCreateProviderForm = !isShowCreateProviderForm">Создать провайдера</PrimaryButton> 
                 </div>
 
-                <div class="p-12 md:w-1/4" v-if="isShowCreateProviderForm">
+                <div class="p-12 md:w-2/4" v-if="isShowCreateProviderForm">
                     <FormPresenter :presenter/>
                 </div>
+
             </div>
         </div>
     </AppLayout>

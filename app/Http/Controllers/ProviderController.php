@@ -29,10 +29,14 @@ class ProviderController extends Controller
     public function store(Request $request)
     {
         //
-        // $request->validate([]);
+        $request->validate([
+            'name' => 'alpha_num|min:3',
+            'token' => 'size:64',
+        ]);
+
         $provider = Provider::create($request->all());
         
-        return redirect()->route('dashboard')->with('success', 'Провайдер успешно создан');
+        return redirect()->route('provider.show', [$provider->id])->with('success', 'Провайдер успешно создан');
     }
 
     /**
@@ -41,6 +45,9 @@ class ProviderController extends Controller
     public function show(Provider $provider)
     {
         //
+        return inertia('ProviderView', [
+            'data' => $provider->toArray()
+        ]);
     }
 
     /**
