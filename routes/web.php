@@ -24,6 +24,7 @@ Route::middleware([
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
+    Route::post('provider/handler/{provider}', [ProviderController::class, 'handler'])->name('provider.handler');
     Route::resource('provider', ProviderController::class);
     Route::resource('order', OrderController::class);
 });

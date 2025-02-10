@@ -13,12 +13,14 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('provider_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('bank_id');
-            $table->decimal('balance', 10, 2);
+            $table->decimal('amount', 10, 2);
             $table->string('card_number')->nullable();
+            $table->string('card_number_client')->nullable();
             $table->string('phone')->nullable();
             $table->string('type');
-            $table->boolean('sbp')->default(false);
+            $table->boolean('sbp_phone')->default(false);
             $table->string('status');
             $table->json('callback_data')->nullable();
             $table->timestamps();

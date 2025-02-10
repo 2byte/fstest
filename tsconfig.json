@@ -1,10 +1,14 @@
 {
     "compilerOptions": {
         "target": "esnext",
-        "module": "amd",
+        "module": "esnext",
         "moduleResolution": "node",
         "allowJs": true,
         "strict": false,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "paths": {
+            "baseUrl": ["./"],
+            "@/*": ["./resources/js/*"]
+        }
     }
 }

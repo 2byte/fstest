@@ -201,6 +201,19 @@ export class Field {
     get isCheckboxGroup(): boolean {
         return this.fieldSettings.type == 'checkbox_group';
     }
+
+    get isSingleCheckbox(): boolean {
+        return this.fieldSettings.type == 'checkbox';
+    }
+
+    get isSingleRadio(): boolean {
+        return this.fieldSettings.type == 'radio';
+    }
+
+    get isSingleCheckboxOrRadio(): boolean {
+        return ['checkbox', 'radio'].includes(this.fieldSettings.type);
+    }
+
     get isBtnSubmit() {
         return this.fieldSettings.type == 'submit';
     }

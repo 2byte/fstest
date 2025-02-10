@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Provider;
 use Illuminate\Http\Request;
 
@@ -31,7 +32,8 @@ class ProviderController extends Controller
         //
         $request->validate([
             'name' => 'alpha_num|min:3',
-            'token' => 'size:64',
+            'token' => 'min:50',
+            'secret_key' => 'required'
         ]);
 
         $provider = Provider::create($request->all());
@@ -44,9 +46,12 @@ class ProviderController extends Controller
      */
     public function show(Provider $provider)
     {
+        $orders = $provider->orders()->latest();
+
         //
         return inertia('ProviderView', [
-            'data' => $provider->toArray()
+            'data' => $provider->toArray(),
+            'orders' => fn() => $orders->paginate(10),
         ]);
     }
 
@@ -72,5 +77,11 @@ class ProviderController extends Controller
     public function destroy(Provider $provider)
     {
         //
+    }
+
+    public function handler(Provider $provider)
+    {
+        dump($provider);
+        return response('ok');
     }
 }

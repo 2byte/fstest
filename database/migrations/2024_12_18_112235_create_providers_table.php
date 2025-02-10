@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->decimal('balance', 10, 2)->default(0);
             $table->string('token')->nullable();
+            $table->string('secret_key')->nullable();
             $table->timestamps();
         });
     }

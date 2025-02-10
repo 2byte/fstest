@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use Arr;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -37,10 +38,14 @@ class HandleInertiaRequests extends Middleware
     {
         return array_merge(parent::share($request), [
             //
-            'flash' => [
-                'success_message' => session('success_message'),
-                'error_message' => session('error_message'),
-            ],
+            'flash' => Arr::only(session()->all(), session('_flash')['old']),
+            // 'flash' => [
+            //     'success_message' => session('success_message'),
+            //     'error_message' => session('error_message'),
+            //     'created_order' => session('created_order'),
+            //     'order_api_errors' => session('order_api_errors'),
+            //     'error' => session('error'),
+            // ],
             'errors' => session('errors')?->toArray(),
         ]);
     }

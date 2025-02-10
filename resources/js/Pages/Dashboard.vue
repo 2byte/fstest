@@ -9,12 +9,14 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 const poviderCreateForm = useForm({
     name: null,
     token: null,
+    secret_key: null,
 });
 
 const form = FormPresenterBuilder.init()
     .fields([
         "name|text|label:Имя",
         "token|text|label:Токен",
+        'secret_key|text|label:Secret key',
         "btnsubmit|submit|label:Создать",
     ])
     .fieldModel(poviderCreateForm)
@@ -29,7 +31,7 @@ const form = FormPresenterBuilder.init()
 
 const presenter: FormPresenterBuilder = form.make();
 
-const isShowCreateProviderForm: Boolean = ref(false);
+const isShowCreateProviderForm = ref(false);
 </script>
 
 <template>
