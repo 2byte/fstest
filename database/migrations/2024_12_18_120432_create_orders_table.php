@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('provider_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('bill_order_id');
             $table->unsignedInteger('bank_id');
             $table->decimal('amount', 10, 2);
             $table->string('card_number')->nullable();

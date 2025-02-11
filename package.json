@@ -24,6 +24,8 @@
         "vue": "^3.3.13"
     },
     "dependencies": {
+        "@jamescoyle/vue-icon": "^0.1.2",
+        "@mdi/js": "^7.4.47",
         "vitest": "^2.1.8",
         "vue3-easy-data-table": "^1.5.47"
     },

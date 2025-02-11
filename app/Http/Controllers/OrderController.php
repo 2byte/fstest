@@ -51,15 +51,18 @@ class OrderController extends Controller
         }
 
         $response = null;
-        $apiErrors = null;
 
         try {
             $response = $fsbill->createOrder(
                 FrutoKassaOrder::make()->setParams($request->all())
             );
-            $provider->orders()->create(
-                Arr::only((array) $response->getData(), ['type', 'bank_id', 'card_number', 'card_number_client', 'amount', 'sbp_phone', 'status', 'created_at'])
-            );
+            if ($response->isSuccess()) {
+                $provider->orders()->create(
+                    Arr::only((array) $response->getData(), ['type', 'bank_id', 'card_number', 'card_number_client', 'amount', 'sbp_phone', 'status', 'created_at'])
+                    +
+                    ['bill_order_id' => $response->getData()->id]
+                );
+            }
         } catch (FrutoKassaApiException $e) {
             return back()->with('error', $e->getMessage());
         }

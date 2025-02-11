@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Provider;
 use Illuminate\Http\Request;
+use Twobyte\Frutokassaapi\FrutoKassaApi;
 
 class ProviderController extends Controller
 {
@@ -37,7 +38,7 @@ class ProviderController extends Controller
         ]);
 
         $provider = Provider::create($request->all());
-        
+
         return redirect()->route('provider.show', [$provider->id])->with('success', 'Провайдер успешно создан');
     }
 
@@ -79,9 +80,41 @@ class ProviderController extends Controller
         //
     }
 
-    public function handler(Provider $provider)
+    public function handler(Request $request, Provider $provider)
     {
-        dump($provider);
+        $fsbill = new FrutoKassaApi(
+            $provider->token,
+            $provider->secret_key
+        );
+
+        if (!$fsbill->validHook()) {
+            abort(403);
+        }
+
+        $order = Order::find($request->id);
+
+        $receivedOrder = (object) $request['data'];
+
+        if ($order->status !== $request->status) {
+            if (
+                $order->status == 'pending_requisites' &&
+                $receivedOrder->status == 'pending'
+            ) {
+                $order->card_number = $receivedOrder->card_number;
+                $order->card_holder = $receivedOrder->card_holder;
+                $order->sbp_phone = $receivedOrder->sbp_phone;
+                $order->status = $receivedOrder->status;
+                $order->save();
+            }
+
+            if ($order->status == 'pending' && $receivedOrder->status == 'processed') {
+                $order->amount = $receivedOrder->amount;
+                $order->status = $receivedOrder->status;
+            }
+        }
+
+        logger('Received order', (array) $receivedOrder);
+
         return response('ok');
     }
 }
