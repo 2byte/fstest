@@ -80,15 +80,31 @@ type FieldSetting = {
     options?: CheckboxRadioSelectOptions[];
 };
 
+type HideTriggerFieldCallback = (
+    newValue: any,
+    oldValue: any,
+    formRemoteControl: FormRemoteControl,
+) => void;
+
 type TriggerHideField = {
     fieldName: string;
     relateToFieldName: string;
+    targetValue?: string | number | HideTriggerFieldCallback | Symbol;
+};
+
+type WatcherFieldSettings = {
+    [key: string]: (
+        newVal: any,
+        oldVal: any,
+        prop: string,
+        formRemoteControl: FormRemoteControl,
+    ) => void;
 };
 
 export class Field {
     name: string;
     typeHtmlField: TypeHtmlField;
-    fieldSettings: FieldSetting = reactive({});
+    fieldSettings: FieldSetting = reactive({}) as FieldSetting;
 
     static typeCustomFields: string[] = [
         "checkbox_group",
@@ -99,7 +115,7 @@ export class Field {
 
     constructor(field: InputField) {
         if (typeof field == "string")
-           Object.assign(this.fieldSettings, Field.parseField(field));
+            Object.assign(this.fieldSettings, Field.parseField(field));
         // else this.fieldSettings = field;
 
         this.name = this.fieldSettings.name;
@@ -129,7 +145,7 @@ export class Field {
             params
                 .filter((item) => item.includes("options:"))
                 .forEach((item) => {
-                    const valueOptions = item.split(':')[1].split(",");
+                    const valueOptions = item.split(":")[1].split(",");
 
                     if (item.includes("=")) {
                         valueOptions.forEach((option) => {
@@ -191,31 +207,31 @@ export class Field {
         ];
 
         return targetTypes.some((type) =>
-            type.includes(this.fieldSettings.type)
+            type.includes(this.fieldSettings.type),
         );
     }
 
     get isRadioGroup(): boolean {
-        return this.fieldSettings.type == 'radio_group';
+        return this.fieldSettings.type == "radio_group";
     }
     get isCheckboxGroup(): boolean {
-        return this.fieldSettings.type == 'checkbox_group';
+        return this.fieldSettings.type == "checkbox_group";
     }
 
     get isSingleCheckbox(): boolean {
-        return this.fieldSettings.type == 'checkbox';
+        return this.fieldSettings.type == "checkbox";
     }
 
     get isSingleRadio(): boolean {
-        return this.fieldSettings.type == 'radio';
+        return this.fieldSettings.type == "radio";
     }
 
     get isSingleCheckboxOrRadio(): boolean {
-        return ['checkbox', 'radio'].includes(this.fieldSettings.type);
+        return ["checkbox", "radio"].includes(this.fieldSettings.type);
     }
 
     get isBtnSubmit() {
-        return this.fieldSettings.type == 'submit';
+        return this.fieldSettings.type == "submit";
     }
 
     get options(): CheckboxRadioSelectOptions[] {
@@ -225,13 +241,13 @@ export class Field {
 
 class FieldRemoteControl {
     #field: Field;
-    #remoteControl: RemoteControl;
+    #remoteControl: FormRemoteControl;
     #formPresenter: FormPresenter;
 
     constructor(
         field: Field,
-        remoteControl: RemoteControl,
-        formPresenter: FormPresenter
+        remoteControl: FormRemoteControl,
+        formPresenter: FormPresenter,
     ) {
         this.#field = field;
         this.#remoteControl = remoteControl;
@@ -263,7 +279,7 @@ class FieldRemoteControl {
     }
 }
 
-class RemoteControl {
+class FormRemoteControl {
     #fp: FormPresenter;
 
     constructor(formPresenter: FormPresenter) {
@@ -273,7 +289,7 @@ class RemoteControl {
     field(name: string, value?: any): FieldRemoteControl {
         if (!this.#fp._fieldsMap.has(name)) {
             throw new Error(
-                `Field ${name} used FieldRemoteControl.field() not found`
+                `Field ${name} used FieldRemoteControl.field() not found`,
             );
         }
 
@@ -301,28 +317,34 @@ type WatchFieldsTrigger = {
     [key: string]: (
         newVal: any,
         oldVal: any,
-        remoteControl: RemoteControl
+        remoteControl: FormRemoteControl,
     ) => void;
 };
 
 type FieldOptions = {
     [key: string]: CheckboxRadioSelectOptions[];
-}
+};
 
-type CallbackSubmit = (event: SubmitEvent, remoteControl: RemoteControl) => void;
+type CallbackSubmit = (
+    event: SubmitEvent,
+    remoteControl: FormRemoteControl,
+) => void;
 
 export class FormPresenter {
     inputFields: InputField[] = [];
 
     _fieldsMap: Map<string, Field> = new Map<string, Field>();
 
-    _fieldVisibleTriggers: Map<string, TriggerHideField> = new Map();
+    _fieldHideTriggers: Map<string, TriggerHideField> = new Map();
 
     _fieldsModel: Object = reactive({});
 
-    _fieldsOptions: Map<string, CheckboxRadioSelectOptions[]> = new Map<string, CheckboxRadioSelectOptions[]>();
+    _fieldsOptions: Map<string, CheckboxRadioSelectOptions[]> = new Map<
+        string,
+        CheckboxRadioSelectOptions[]
+    >();
 
-    _remoteControl: RemoteControl = new RemoteControl(this);
+    _formRemoteControl: FormRemoteControl = new FormRemoteControl(this);
 
     #watchFieldTriggers: Map<string, CallableFunction> = new Map<
         string,
@@ -369,7 +391,7 @@ export class FormPresenter {
         return this;
     }
 
-    defaultState(cb: (remoteControl: RemoteControl) => void): this {
+    defaultState(cb: (remoteControl: FormRemoteControl) => void): this {
         this.#defaultStateCb = cb;
 
         return this;
@@ -392,18 +414,34 @@ export class FormPresenter {
     addOptionToField() {
         for (const [name, options] of this._fieldsOptions) {
             if (!this._fieldsMap.has(name)) {
-                throw new Error(`Error set options for field ${name}, not found`)
+                throw new Error(
+                    `Error set options for field ${name}, not found`,
+                );
             }
             this._fieldsMap.get(name).setOptions(options);
         }
     }
 
-    addTriggerHideField(fieldName: string, relateToFieldName: string) {
-        this._fieldVisibleTriggers.set(fieldName, {
-            fieldName,
+    fieldHideIf(
+        targetFieldName: NameField,
+        relateToFieldName: NameField,
+        value: string | number | CallableFunction,
+    ): this {
+        this._fieldHideTriggers.set(targetFieldName, {
+            fieldName: targetFieldName,
             relateToFieldName,
-        })
-
+            targetValue: (
+                newValue,
+                oldValue,
+                formRemoteControl: FormRemoteControl,
+            ) => {
+                if (this._fieldsModel[relateToFieldName] == value) {
+                    formRemoteControl.field(targetFieldName).hide();
+                } else {
+                    formRemoteControl.field(targetFieldName).show();
+                }
+            },
+        });
         return this;
     }
 
@@ -411,24 +449,27 @@ export class FormPresenter {
         this.isShowImgLoader.value = true;
 
         if (this.#cbSubmit) {
-            this.#cbSubmit(e, this._remoteControl);
+            this.#cbSubmit(e, this._formRemoteControl);
         }
         return this;
     }
 
     watchObjectChanges(stateObject: Object, cb): void {
-        const previousState: Object = {...stateObject};
+        const previousState: Object = { ...stateObject };
 
         watch(stateObject, (newVal: any, oldVal: any) => {
             const keys = Object.keys(newVal);
 
             keys.forEach((key) => {
                 if (newVal[key] !== previousState[key]) {
-
                     const trigger = this.#watchFieldTriggers.get(key);
 
                     if (trigger) {
-                        trigger(newVal[key], previousState[key], this._remoteControl);
+                        trigger(
+                            newVal[key],
+                            previousState[key],
+                            this._formRemoteControl,
+                        );
                     }
                 }
             });
@@ -436,31 +477,67 @@ export class FormPresenter {
         });
     }
 
-    watcherFieldChanges() {
-        const currentStateFields = this._fieldsMap.entries().map(([k, v]) => {
-            return v.fieldSettings;
-        });
-        
-        currentStateFields.forEach((fieldSetting: FieldSetting) => {
-            watch(() => fieldSetting.visible, (newValue, oldValue) => {
+    watcherFieldSettings(watchers: WatcherFieldSettings): void {
+        const currentStateFields = Array.from(
+            this._fieldsMap
+                .entries()
+                .map(([k, v]) => {
+                    return { [k]: { ...v.fieldSettings } };
+                })
+                .filter((obj: object) => {
+                    return watchers[Object.keys(obj)[0]];
+                }),
+        );
 
+        this._fieldsMap
+            .entries()
+            .forEach(([name, field]: [string, Field], index: number): void => {
+                watch(
+                    field.fieldSettings,
+                    (newValue: FieldSetting, oldValue: FieldSetting) => {
+                        const keys = Object.keys(newValue);
+
+                        keys.forEach((key) => {
+                            const prevStateSetting = currentStateFields.find(
+                                (data, i) =>
+                                    data[field.name] && data[field.name][key],
+                            );
+
+                            if (prevStateSetting === undefined) return;
+
+                            if (newValue[key] !== prevStateSetting) {
+                                if (watchers[field.name]) {
+                                    watchers[field.name](
+                                        newValue[key],
+                                        oldValue[key],
+                                        key,
+                                        this._formRemoteControl,
+                                    );
+                                    Object.assign(prevStateSetting, newValue);
+                                }
+                            }
+                        });
+                    },
+                );
             });
-        });
     }
 
     watcherModelChanges() {
-        const previousState: Object = {...this._fieldsModel};
+        const previousState: Object = { ...this._fieldsModel };
 
         watch(this._fieldsModel, (newVal: any, oldVal: any) => {
             const keys = Object.keys(newVal);
 
             keys.forEach((key) => {
                 if (newVal[key] !== previousState[key]) {
-
                     const trigger = this.#watchFieldTriggers.get(key);
 
                     if (trigger) {
-                        trigger(newVal[key], previousState[key], this._remoteControl);
+                        trigger(
+                            newVal[key],
+                            previousState[key],
+                            this._formRemoteControl,
+                        );
                     }
                 }
             });
@@ -468,13 +545,38 @@ export class FormPresenter {
         });
     }
 
+    _handleTriggersHideFields() {
+        this._fieldHideTriggers.forEach(
+            (trigger: TriggerHideField, fieldName: NameField): void => {
+                let cb = null;
+                if (typeof trigger.targetValue == "function") {
+                    cb = trigger.targetValue;
+                } else {
+                    cb = (
+                        newValue,
+                        oldValue,
+                        formRemoteControl: FormRemoteControl,
+                    ): void => {
+                        if (
+                            trigger.targetValue &&
+                            newValue == trigger.targetValue
+                        ) {
+                            formRemoteControl.field(trigger.fieldName).hide();
+                        }
+                    };
+                }
+                this.#watchFieldTriggers.set(trigger.relateToFieldName, cb);
+            },
+        );
+    }
+
     make(): this {
         this.fieldBuild();
         if (this.#defaultStateCb) {
-            this.#defaultStateCb(this._remoteControl);
+            this.#defaultStateCb(this._formRemoteControl);
         }
+        this._handleTriggersHideFields();
         this.watcherModelChanges();
-        this.watcherFieldChanges();
 
         return this;
     }

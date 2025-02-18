@@ -54,6 +54,7 @@ const presenter = FormPresenterBuilder.init()
         ],
     })
     .fieldModel(modelOrder)
+    .fieldHideIf('card_number_client', 'sbp', 1)
     .make()
     .submit((event, remoteControl) => {
         event.preventDefault();
