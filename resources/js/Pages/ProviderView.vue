@@ -34,8 +34,8 @@ if (props.flash) {
 const presenter = FormPresenterBuilder.init()
     .fields([
         "type|radio_group|label:Направление платежа|options:input=Ввод,output=Вывод",
-        "card_number|text|label:Номер карты",
-        "card_holder|text|label:Имя на карте",
+        "card_number|text|label:Номер карты|hidden",
+        "card_holder|text|label:Имя на карте|hidden",
         "card_number_client|text|label:Номер карты клиента",
         "amount|text|label:Сумма платежа",
         "bank_id|radio_group|label:Банк",
@@ -55,6 +55,8 @@ const presenter = FormPresenterBuilder.init()
     })
     .fieldModel(modelOrder)
     .fieldHideIf('card_number_client', 'sbp', 1)
+    .fieldShowIf('card_number', 'type', 'output')
+    .fieldShowIf('card_holder', 'type', 'output')
     .make()
     .submit((event, remoteControl) => {
         event.preventDefault();

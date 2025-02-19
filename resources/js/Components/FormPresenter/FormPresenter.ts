@@ -329,13 +329,12 @@ type CallbackSubmit = (
     event: SubmitEvent,
     remoteControl: FormRemoteControl,
 ) => void;
-
 export class FormPresenter {
     inputFields: InputField[] = [];
 
     _fieldsMap: Map<string, Field> = new Map<string, Field>();
 
-    _fieldHideTriggers: Map<string, TriggerHideField> = new Map();
+    _fieldHideTriggers: Map<string | Symbol, TriggerHideField> = new Map();
 
     _fieldsModel: Object = reactive({});
 
@@ -346,10 +345,8 @@ export class FormPresenter {
 
     _formRemoteControl: FormRemoteControl = new FormRemoteControl(this);
 
-    #watchFieldTriggers: Map<string, CallableFunction> = new Map<
-        string,
-        CallableFunction
-    >();
+    #watchFieldTriggers: Map<string, CallableFunction | CallableFunction[]> =
+        new Map<string, CallableFunction | CallableFunction[]>();
 
     #defaultStateCb: CallableFunction;
 
@@ -427,7 +424,7 @@ export class FormPresenter {
         relateToFieldName: NameField,
         value: string | number | CallableFunction,
     ): this {
-        this._fieldHideTriggers.set(targetFieldName, {
+        this._fieldHideTriggers.set(Symbol(targetFieldName), {
             fieldName: targetFieldName,
             relateToFieldName,
             targetValue: (
@@ -439,6 +436,29 @@ export class FormPresenter {
                     formRemoteControl.field(targetFieldName).hide();
                 } else {
                     formRemoteControl.field(targetFieldName).show();
+                }
+            },
+        });
+        return this;
+    }
+
+    fieldShowIf(
+        targetFieldName: NameField,
+        relateToFieldName: NameField,
+        value: string | number | CallableFunction,
+    ): this {
+        this._fieldHideTriggers.set(Symbol(targetFieldName), {
+            fieldName: targetFieldName,
+            relateToFieldName,
+            targetValue: (
+                newValue,
+                oldValue,
+                formRemoteControl: FormRemoteControl,
+            ) => {
+                if (this._fieldsModel[relateToFieldName] == value) {
+                    formRemoteControl.field(targetFieldName).show();
+                } else {
+                    formRemoteControl.field(targetFieldName).hide();
                 }
             },
         });
@@ -532,12 +552,20 @@ export class FormPresenter {
                 if (newVal[key] !== previousState[key]) {
                     const trigger = this.#watchFieldTriggers.get(key);
 
-                    if (trigger) {
+                    if (typeof trigger == "function") {
                         trigger(
                             newVal[key],
                             previousState[key],
                             this._formRemoteControl,
                         );
+                    } else if (Array.isArray(trigger)) {
+                        trigger.forEach((triggerCb) => {
+                            triggerCb(
+                                newVal[key],
+                                previousState[key],
+                                this._formRemoteControl,
+                            );
+                        });
                     }
                 }
             });
@@ -545,7 +573,7 @@ export class FormPresenter {
         });
     }
 
-    _handleTriggersHideFields() {
+    makeTriggers() {
         this._fieldHideTriggers.forEach(
             (trigger: TriggerHideField, fieldName: NameField): void => {
                 let cb = null;
@@ -565,7 +593,14 @@ export class FormPresenter {
                         }
                     };
                 }
-                this.#watchFieldTriggers.set(trigger.relateToFieldName, cb);
+                if (this.#watchFieldTriggers.has(trigger.relateToFieldName)) {
+                    this.#watchFieldTriggers.set(trigger.relateToFieldName, [
+                        this.#watchFieldTriggers.get(trigger.relateToFieldName),
+                        cb,
+                    ]);
+                } else {
+                    this.#watchFieldTriggers.set(trigger.relateToFieldName, cb);
+                }
             },
         );
     }
@@ -575,7 +610,7 @@ export class FormPresenter {
         if (this.#defaultStateCb) {
             this.#defaultStateCb(this._formRemoteControl);
         }
-        this._handleTriggersHideFields();
+        this.makeTriggers();
         this.watcherModelChanges();
 
         return this;

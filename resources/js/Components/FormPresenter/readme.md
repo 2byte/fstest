@@ -27,6 +27,9 @@ const form = FormPresenterBuilder.init()
         ]
     })
     .fieldModel(orderForm)
+    .fieldHideIf('card_number_client', ,'outputt')
+    .fieldShowIf('card_holder', 'type', 'output')
+    .fieldShowIf('card_holder', 'type', 'output')
     .defaultState((remoteControl) => {
         remoteControl.field('type', 'input');
     }).watchFields({
