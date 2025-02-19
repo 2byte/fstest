@@ -484,12 +484,20 @@ export class FormPresenter {
                 if (newVal[key] !== previousState[key]) {
                     const trigger = this.#watchFieldTriggers.get(key);
 
-                    if (trigger) {
+                    if (typeof trigger == "function") {
                         trigger(
                             newVal[key],
                             previousState[key],
                             this._formRemoteControl,
                         );
+                    } else if (Array.isArray(trigger)) {
+                        trigger.forEach((triggerCb) => {
+                            triggerCb(
+                                newVal[key],
+                                previousState[key],
+                                this._formRemoteControl,
+                            );
+                        })
                     }
                 }
             });
