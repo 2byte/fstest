@@ -1,7 +1,13 @@
 import { reactive, ref, watch } from "vue";
 
-// Any your name name=""
+/**
+ * Type representing any valid field name string
+ */
 type NameField = `${string}`;
+
+/**
+ * Available form field types
+ */
 type TypeField =
     | "text"
     | "number"
@@ -17,6 +23,10 @@ type TypeField =
     | "date"
     | "datetime-local"
     | "submit";
+
+/**
+ * HTML input types supported by the form presenter
+ */
 type TypeHtmlField =
     | "text"
     | "number"
@@ -30,8 +40,15 @@ type TypeHtmlField =
     | "datetime-local"
     | "button"
     | `${null}`;
+
+/**
+ * Additional parameters for field configuration
+ */
 type AdditionalParamsField = `label:${string | number}` | "hidden";
 
+/**
+ * Standard HTML attributes that can be applied to form fields
+ */
 type AdditionalAttributesHtmlField =
     | "class"
     | "id"
@@ -55,8 +72,15 @@ type AdditionalAttributesHtmlField =
 
 type AdditionalParams = AdditionalParamsField | AdditionalAttributesHtmlField;
 
+/**
+ * String format for inline field definition
+ * Example: "fieldName|text|label:Field Label"
+ */
 type InputFieldInline = `${NameField}|${TypeField}|${AdditionalParams}`;
 
+/**
+ * Field configuration object or inline string definition
+ */
 type InputField =
     | {
           name: string;
@@ -65,11 +89,17 @@ type InputField =
       }
     | InputFieldInline;
 
+/**
+ * Options for checkbox, radio and select fields
+ */
 type CheckboxRadioSelectOptions = {
     text: string;
     value: string | number;
 };
 
+/**
+ * Complete field settings configuration
+ */
 type FieldSetting = {
     name: string;
     type: TypeField;
@@ -80,18 +110,27 @@ type FieldSetting = {
     options?: CheckboxRadioSelectOptions[];
 };
 
+/**
+ * Callback type for field hide/show triggers
+ */
 type HideTriggerFieldCallback = (
     newValue: any,
     oldValue: any,
     formRemoteControl: FormRemoteControl,
 ) => void;
 
+/**
+ * Configuration for field visibility triggers
+ */
 type TriggerHideField = {
     fieldName: string;
     relateToFieldName: string;
     targetValue?: string | number | HideTriggerFieldCallback | Symbol;
 };
 
+/**
+ * Watchers for field setting changes
+ */
 type WatcherFieldSettings = {
     [key: string]: (
         newVal: any,
@@ -101,6 +140,9 @@ type WatcherFieldSettings = {
     ) => void;
 };
 
+/**
+ * Represents a form field with its configuration and state
+ */
 export class Field {
     name: string;
     typeHtmlField: TypeHtmlField;
@@ -113,18 +155,29 @@ export class Field {
         "switch_group",
     ];
 
+    /**
+     * Creates a new Field instance
+     * @param field Field configuration object or inline string
+     */
     constructor(field: InputField) {
         if (typeof field == "string")
             Object.assign(this.fieldSettings, Field.parseField(field));
-        // else this.fieldSettings = field;
 
         this.name = this.fieldSettings.name;
     }
 
+    /**
+     * Factory method to create a new Field instance
+     * @param field Field configuration
+     */
     static make(field: InputField): Field {
         return new Field(field);
     }
 
+    /**
+     * Parses an inline field definition string into field settings
+     * @param field Inline field definition string
+     */
     static parseField(field: InputFieldInline): FieldSetting {
         const [name, type, ...params] = field.split("|");
 
@@ -172,11 +225,16 @@ export class Field {
         };
     }
 
+    /**
+     * Sets options for checkbox/radio group fields
+     * @param options Array of options with text and value
+     */
     setOptions(options: CheckboxRadioSelectOptions[]) {
         this.fieldSettings.options = options;
         return this;
     }
 
+    // Getters
     get isVisible(): boolean {
         return this.fieldSettings.visible;
     }
@@ -193,6 +251,9 @@ export class Field {
         return this.fieldSettings.nativeAttributes;
     }
 
+    /**
+     * Checks if the field is a standard form input
+     */
     get isFormInput(): boolean {
         const targetTypes = [
             "text",
@@ -214,6 +275,7 @@ export class Field {
     get isRadioGroup(): boolean {
         return this.fieldSettings.type == "radio_group";
     }
+
     get isCheckboxGroup(): boolean {
         return this.fieldSettings.type == "checkbox_group";
     }
@@ -239,6 +301,9 @@ export class Field {
     }
 }
 
+/**
+ * Controls individual field visibility and state
+ */
 class FieldRemoteControl {
     #field: Field;
     #remoteControl: FormRemoteControl;
@@ -254,6 +319,9 @@ class FieldRemoteControl {
         this.#formPresenter = formPresenter;
     }
 
+    /**
+     * Hides the field
+     */
     hide() {
         this.#field.fieldSettings.visible = false;
         return this;
@@ -261,6 +329,9 @@ class FieldRemoteControl {
 
     hideIf(fieldName: string, relateFieldName: string) {}
 
+    /**
+     * Shows the field
+     */
     show() {
         this.#field.fieldSettings.visible = true;
         return this;
@@ -268,17 +339,26 @@ class FieldRemoteControl {
 
     showIf() {}
 
+    /**
+     * Shows and enables the field
+     */
     mount() {
         this.show();
         return this;
     }
 
+    /**
+     * Hides and disables the field
+     */
     unmount() {
         this.hide();
         return this;
     }
 }
 
+/**
+ * Controls form-wide operations and state
+ */
 class FormRemoteControl {
     #fp: FormPresenter;
 
@@ -286,6 +366,11 @@ class FormRemoteControl {
         this.#fp = formPresenter;
     }
 
+    /**
+     * Gets remote control for a specific field
+     * @param name Field name
+     * @param value Optional value to set
+     */
     field(name: string, value?: any): FieldRemoteControl {
         if (!this.#fp._fieldsMap.has(name)) {
             throw new Error(
@@ -298,15 +383,24 @@ class FormRemoteControl {
         return new FieldRemoteControl(field, this, this.#fp);
     }
 
+    /**
+     * Checks if a field has a specific value
+     */
     isVal(fieldName: string, val: any) {
         return this.#fp._fieldsModel[fieldName] == val;
     }
 
+    /**
+     * Hides the loading indicator
+     */
     offImgLoader(): this {
         this.#fp.isShowImgLoader.value = false;
         return this;
     }
 
+    /**
+     * Hides the entire form
+     */
     hideForm() {
         this.#fp.isShowForm.value = false;
         return false;
@@ -329,6 +423,10 @@ type CallbackSubmit = (
     event: SubmitEvent,
     remoteControl: FormRemoteControl,
 ) => void;
+
+/**
+ * Main form presenter class that manages form fields, state and behavior
+ */
 export class FormPresenter {
     inputFields: InputField[] = [];
 
@@ -357,15 +455,26 @@ export class FormPresenter {
 
     constructor() {}
 
+    /**
+     * Creates a new FormPresenter instance
+     */
     static init() {
         return new FormPresenter();
     }
 
+    /**
+     * Sets the form fields configuration
+     * @param input Array of field configurations
+     */
     fields(input: InputField[]): this {
         this.inputFields = input;
         return this;
     }
 
+    /**
+     * Sets up watchers for field value changes
+     * @param triggers Map of field names to watcher callbacks
+     */
     watchFields(triggers: WatchFieldsTrigger): this {
         for (const fieldName in triggers) {
             this.#watchFieldTriggers.set(fieldName, triggers[fieldName]);
@@ -373,6 +482,9 @@ export class FormPresenter {
         return this;
     }
 
+    /**
+     * Builds field instances from configuration
+     */
     fieldBuild() {
         this.inputFields.forEach((field) => {
             const fieldName =
@@ -383,31 +495,47 @@ export class FormPresenter {
         this.addOptionToField();
     }
 
+    /**
+     * Sets the form data model
+     * @param modelObj Form data object
+     */
     fieldModel(modelObj: Object): this {
         this._fieldsModel = modelObj;
         return this;
     }
 
+    /**
+     * Sets the default form state callback
+     * @param cb Callback function
+     */
     defaultState(cb: (remoteControl: FormRemoteControl) => void): this {
         this.#defaultStateCb = cb;
-
         return this;
     }
 
+    /**
+     * Sets the form submit handler
+     * @param cbSubmit Submit callback function
+     */
     submit(cbSubmit: CallbackSubmit): this {
         this.#cbSubmit = cbSubmit;
-
         return this;
     }
 
+    /**
+     * Sets options for select/radio/checkbox fields
+     * @param fieldOptions Map of field names to options
+     */
     options(fieldOptions: FieldOptions): this {
         for (const [name, options] of Object.entries(fieldOptions)) {
             this._fieldsOptions.set(name, options);
         }
-
         return this;
     }
 
+    /**
+     * Applies options to fields that support them
+     */
     addOptionToField() {
         for (const [name, options] of this._fieldsOptions) {
             if (!this._fieldsMap.has(name)) {
@@ -419,6 +547,12 @@ export class FormPresenter {
         }
     }
 
+    /**
+     * Sets up conditional field hiding
+     * @param targetFieldName Field to hide
+     * @param relateToFieldName Field to watch
+     * @param value Trigger value
+     */
     fieldHideIf(
         targetFieldName: NameField,
         relateToFieldName: NameField,
@@ -442,6 +576,12 @@ export class FormPresenter {
         return this;
     }
 
+    /**
+     * Sets up conditional field showing
+     * @param targetFieldName Field to show
+     * @param relateToFieldName Field to watch
+     * @param value Trigger value
+     */
     fieldShowIf(
         targetFieldName: NameField,
         relateToFieldName: NameField,
@@ -465,6 +605,10 @@ export class FormPresenter {
         return this;
     }
 
+    /**
+     * Handles form submission
+     * @param e Submit event
+     */
     fireSubmit(e: SubmitEvent): this {
         this.isShowImgLoader.value = true;
 
@@ -474,6 +618,11 @@ export class FormPresenter {
         return this;
     }
 
+    /**
+     * Watches for changes in a state object
+     * @param stateObject Object to watch
+     * @param cb Callback function
+     */
     watchObjectChanges(stateObject: Object, cb): void {
         const previousState: Object = { ...stateObject };
 
@@ -497,7 +646,7 @@ export class FormPresenter {
                                 previousState[key],
                                 this._formRemoteControl,
                             );
-                        })
+                        });
                     }
                 }
             });
@@ -505,6 +654,10 @@ export class FormPresenter {
         });
     }
 
+    /**
+     * Watches for changes in field settings
+     * @param watchers Map of field names to watcher callbacks
+     */
     watcherFieldSettings(watchers: WatcherFieldSettings): void {
         const currentStateFields = Array.from(
             this._fieldsMap
@@ -550,6 +703,9 @@ export class FormPresenter {
             });
     }
 
+    /**
+     * Sets up watchers for model changes
+     */
     watcherModelChanges() {
         const previousState: Object = { ...this._fieldsModel };
 
@@ -581,6 +737,9 @@ export class FormPresenter {
         });
     }
 
+    /**
+     * Sets up field visibility triggers
+     */
     makeTriggers() {
         this._fieldHideTriggers.forEach(
             (trigger: TriggerHideField, fieldName: NameField): void => {
@@ -613,6 +772,9 @@ export class FormPresenter {
         );
     }
 
+    /**
+     * Initializes the form presenter
+     */
     make(): this {
         this.fieldBuild();
         if (this.#defaultStateCb) {
@@ -624,10 +786,16 @@ export class FormPresenter {
         return this;
     }
 
+    /**
+     * Gets all form fields
+     */
     get entryFields(): Map<string, Field> {
         return this._fieldsMap;
     }
 
+    /**
+     * Gets the form data model
+     */
     get model(): Object {
         return this._fieldsModel;
     }
